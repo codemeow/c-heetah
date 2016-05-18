@@ -45,7 +45,28 @@ int main(void)
 
 # Call as library
 
-TO BE DONE. Going to implement building as library for LD_PRELOAD hack.
+You also may use C-heetah with any built application via LD_PRELOAD trick:
+
+```
+./buildlibrary.sh
+LD_PRELOAD=./libcheetah.so ./a.out
+```
+
+For example you can use it with an example built without included header (#00):
+```
+cd examples
+./buildexamples.sh
+cd ..
+
+./buildlibrary.sh
+LD_PRELOAD=./libcheetah.so ./examples/bin/00.elf
+
+[C-TH][         C-heetah library:0000] Malloc :              0x00000190 B (0x083FE008) : Success
+Hello world!
+[C-TH][         C-heetah library:0000] Free   : (0x083FE008)                           : Success
+```
+
+Note, that by default `buildlibrary.sh`  builds with options `CTH_COLOURING_ON` and `CTH_OUTPUT_STDERR`. You may change it as you wish, no limits applied.
 
 # Compile-time options
 
