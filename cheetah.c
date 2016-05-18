@@ -105,7 +105,7 @@ unsigned int cth_actionfailed =
 
 /* Consts */
 #ifndef CTH_COLOURING_ON
-#   define CTH_MSG_SIGNATURE "[C-TH][%25s:%04u] "
+#   define CTH_MSG_SIGNATURE "\r[C-TH][%25s:%04u] "
 #   define CTH_MSG_MALLOC    "Malloc : "
 #   define CTH_MSG_CALLOC    "Calloc : "
 #   define CTH_MSG_REALLOC   "Realloc: "
