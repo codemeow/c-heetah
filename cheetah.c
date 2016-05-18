@@ -294,18 +294,8 @@ void * CTH_Calloc(size_t nmemb, size_t size, char * filename, unsigned int line)
 void   CTH_Free(void * ptr, char * filename, unsigned int line)
 {
     CTH_REGISTER_FREE
-    if (!ptr)
-    {
-        CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_FREE    CTH_MSG_POINTER
-                  CTH_MSG_ALIGNER   CTH_MSG_ALIGNER CTH_MSG_FAILED, 
-                  filename, line, NULL);
-        CTH_ActionFailed(NULL);
-        return;
-    }
-
     CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_FREE CTH_MSG_POINTER CTH_MSG_ALIGNER, 
               filename, line, ptr);
-
 
     free(ptr);
 
