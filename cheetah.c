@@ -19,7 +19,12 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
+#ifndef CTH_BUILD_LIBRARY
+#   include <stdlib.h>
+#else
+    extern void exit(int status);
+#   define EXIT_FAILURE 1
+#endif // CTH_BUILD_LIBRARY
 #include <stdarg.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -110,8 +115,8 @@ unsigned int cth_actionfailed =
 #   define CTH_MSG_ALIGNER   "             "
 #   define CTH_MSG_FAILED    ": Failed \n"
 #   define CTH_MSG_SUCCESS   ": Success\n"
-#   define CTH_MSG_EXITING   ": Exiting\n"
-#   define CTH_MSG_NOFILE    "Can't write to file %s\n"
+#   define CTH_MSG_EXITING   "Exiting\n"
+#   define CTH_MSG_NOFILE    "[C-TH] Can't write to file %s\n"
 #else // CTH_COLOURING_ON
 #   define CTH_MSG_SIGNATURE CTH_SET_WHITE  "[C-TH][%25s:%04u] " CTH_SET_DEFAULT
 #   define CTH_MSG_MALLOC    CTH_SET_YELLOW "Malloc : " CTH_SET_DEFAULT
@@ -162,6 +167,25 @@ unsigned int cth_actionfailed =
 pthread_mutex_t cth_mutex_printer = PTHREAD_MUTEX_INITIALIZER;
 /* NOTE: mutex will not be released in the code. */
 
+#ifdef CTH_BUILD_LIBRARY
+#   include <dlfcn.h>
+
+#   define CTH_REGISTER_MALLOC  void * (*libc_malloc )(                size_t) = dlsym(RTLD_NEXT, "malloc" );
+#   define CTH_REGISTER_CALLOC  void * (*libc_calloc )(        size_t, size_t) = dlsym(RTLD_NEXT, "calloc" );
+#   define CTH_REGISTER_REALLOC void * (*libc_realloc)(void *,         size_t) = dlsym(RTLD_NEXT, "realloc");
+#   define CTH_REGISTER_FREE    void * (*libc_free   )(void *                ) = dlsym(RTLD_NEXT, "free"   );
+
+#   define malloc   libc_malloc
+#   define calloc   libc_calloc
+#   define realloc  libc_realloc
+#   define free     libc_free
+#else // Include-mode
+#   define CTH_REGISTER_MALLOC
+#   define CTH_REGISTER_CALLOC
+#   define CTH_REGISTER_REALLOC
+#   define CTH_REGISTER_FREE
+#endif //CTH_BUILD_LIBRARY
+
 void CTH_Print(char * format, ...)
 {
     pthread_mutex_lock(&cth_mutex_printer);
@@ -179,8 +203,7 @@ void CTH_Print(char * format, ...)
                 FILE * file = fopen(namebuff, "ab");
                 if (!file)
                 {
-                    fprintf(stderr, CTH_MSG_SIGNATURE CTH_MSG_NOFILE,
-                            CTH_PLACE, namebuff);
+                    fprintf(stderr, CTH_MSG_NOFILE, namebuff);
                     exit(EXIT_FAILURE);
                 }
                 vfprintf(file, format, args);
@@ -199,13 +222,15 @@ void CTH_ActionFailed(void * ptr)
     else if (cth_actionfailed == CTH_A_EXIT)
     {
         if (ptr) free(ptr);
-        CTH_Print(CTH_MSG_SIGNATURE "Exit\n", CTH_PLACE);
+        CTH_Print(CTH_MSG_EXITING);
         exit(EXIT_FAILURE);
     }
 }
 
 void * CTH_Malloc(size_t size, char * filename, unsigned int line)
 {
+    CTH_REGISTER_MALLOC
+    CTH_REGISTER_CALLOC
     CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_MALLOC CTH_MSG_ALIGNER CTH_MSG_BYTES, 
               filename, line, size);
     void * result = NULL;
@@ -228,6 +253,7 @@ void * CTH_Malloc(size_t size, char * filename, unsigned int line)
 
 void * CTH_Realloc(void * ptr, size_t size, char * filename, unsigned int line)
 {
+    CTH_REGISTER_REALLOC
     CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_REALLOC CTH_MSG_POINTER CTH_MSG_BYTES, 
               filename, line, ptr, size);
     void * result;
@@ -246,6 +272,7 @@ void * CTH_Realloc(void * ptr, size_t size, char * filename, unsigned int line)
 
 void * CTH_Calloc(size_t nmemb, size_t size, char * filename, unsigned int line)
 {
+    CTH_REGISTER_CALLOC
     CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_CALLOC CTH_MSG_ALIGNER CTH_MSG_BYTES, 
               filename, line, nmemb * size);
     void * result;
@@ -266,6 +293,7 @@ void * CTH_Calloc(size_t nmemb, size_t size, char * filename, unsigned int line)
 
 void   CTH_Free(void * ptr, char * filename, unsigned int line)
 {
+    CTH_REGISTER_FREE
     if (!ptr)
     {
         CTH_Print(CTH_MSG_SIGNATURE CTH_MSG_FREE    CTH_MSG_POINTER
@@ -283,4 +311,33 @@ void   CTH_Free(void * ptr, char * filename, unsigned int line)
 
     CTH_Print(CTH_MSG_ALIGNER CTH_MSG_SUCCESS);
 }
+
+#ifdef CTH_BUILD_LIBRARY
+#   define CTH_LIBRARY_SIGNATURE "C-heetah library"
+
+#   undef malloc
+#   undef calloc  
+#   undef realloc 
+#   undef free    
+
+    void * malloc(size_t size)
+    {
+        return CTH_Malloc(size, CTH_LIBRARY_SIGNATURE, 0);
+    }
+
+    void * calloc(size_t nmemb, size_t size)
+    {
+       return CTH_Calloc(nmemb, size, CTH_LIBRARY_SIGNATURE, 0);
+    }
+
+    void * realloc(void * ptr, size_t size)
+    {
+        return CTH_Realloc(ptr, size, CTH_LIBRARY_SIGNATURE, 0);
+    }
+
+    void free(void * ptr)
+    {
+        CTH_Free(ptr, CTH_LIBRARY_SIGNATURE, 0);
+    }
+#endif // CTH_BUILD_LIBRARY
 
