@@ -125,10 +125,10 @@ unsigned int cth_actionfailed =
 #   define CTH_MSG_FREE      CTH_SET_GREEN  "Free   : " CTH_SET_DEFAULT
 #   define CTH_MSG_BYTES     CTH_SET_WHITE  "0x%08X B " CTH_SET_DEFAULT
 #   define CTH_MSG_POINTER   CTH_SET_BLUE   "(0x%08X) " CTH_SET_DEFAULT
-#   define CTH_MSG_ALIGNER                  "             "
-#   define CTH_MSG_FAILED    CTH_SET_RED    ": Failed \n" CTH_SET_DEFAULT
-#   define CTH_MSG_SUCCESS   CTH_SET_GREEN  ": Success\n" CTH_SET_DEFAULT
-#   define CTH_MSG_EXITING   CTH_SET_RED    ": Exiting\n" CTH_SET_DEFAULT
+#   define CTH_MSG_ALIGNER   CTH_SET_WHITE  "             " CTH_SET_DEFAULT
+#   define CTH_MSG_FAILED    CTH_SET_RED    ": Failed " CTH_SET_DEFAULT "\n"
+#   define CTH_MSG_SUCCESS   CTH_SET_GREEN  ": Success" CTH_SET_DEFAULT "\n"
+#   define CTH_MSG_EXITING   CTH_SET_RED    ": Exiting" CTH_SET_DEFAULT "\n"
 #   define CTH_MSG_NOFILE    CTH_SET_RED    "Can't write to file %s\n" CTH_SET_DEFAULT
 #endif // CTH_COLOURING_ON
 
